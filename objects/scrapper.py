@@ -7,6 +7,10 @@ class Scrapper(LoginSession, StringModifier):
     def __init__(self):
         LoginSession.__init__(self)
         StringModifier.__init__(self)
+        self.buildings = []
+        self.page_count = 1
+        self.more_buildings_available = True
+        self.content = None
 
     def __get_content(self, url):
         r = self.session.get(url)
@@ -15,10 +19,23 @@ class Scrapper(LoginSession, StringModifier):
             self.content = BeautifulSoup(r.text,'lxml')
 
     def get_buildings(self):
-        self.__get_content(self.secrets['search_url'])
+
+        if not self.more_buildings_available:
+            return False
+
+        url = self.secrets['search_url'] + '?b_page={page_count}'.format(page_count = self.page_count)
+        last_content = self.content
+        self.__get_content(url)
 
         building_contents = self.content.find('div',{'id':'building-tab'}).find_all('a', {'class':'no-decro'})
-        buildings = []
+
+        if last_content:
+            last_building_contents = last_content.find('div',{'id':'building-tab'}).find_all('a', {'class':'no-decro'})
+
+            if last_building_contents == building_contents:
+                self.more_buildings_available = False
+                return False
+
         for content in building_contents:
 
             detail = {
@@ -28,11 +45,13 @@ class Scrapper(LoginSession, StringModifier):
 
             if detail['link'].startswith('new-development'):
                 continue
-            buildings.append(detail)
-        return buildings
+            elif detail not in self.buildings:
+                self.buildings.append(detail)
+        return True
 
-    def __get_more_buildings(self):
-        pass
+    def get_more_buildings(self):
+        self.page_count += 1
+        self.get_buildings()
 
     def get_history(self, building, type='sold'):
 
