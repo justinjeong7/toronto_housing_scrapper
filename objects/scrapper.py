@@ -1,13 +1,16 @@
-from login import LoginSession
+from objects.login import LoginSession
 from bs4 import BeautifulSoup
-from utility import StringModifier
+from objects.utility import StringModifier
+from objects.persistance import Persist
+import datetime
 
-class Scrapper(LoginSession, StringModifier):
+class Scrapper(LoginSession, StringModifier, Persist):
 
     def __init__(self):
         LoginSession.__init__(self)
         StringModifier.__init__(self)
-        self.buildings = []
+        Persist.__init__(self)
+        self.buildings = {}
         self.page_count = 1
         self.more_buildings_available = True
         self.content = None
@@ -37,25 +40,23 @@ class Scrapper(LoginSession, StringModifier):
                 return False
 
         for content in building_contents:
+            title = content.get('title')
+            link = content.get('href')
 
-            detail = {
-                'link':content.get('href'),
-                'title' : content.get('title')
-            }
-
-            if detail['link'].startswith('new-development'):
+            if link.startswith('new-development'):
                 continue
-            elif detail not in self.buildings:
-                self.buildings.append(detail)
+            else:
+                self.buildings[title] = link
+
         return True
 
     def get_more_buildings(self):
         self.page_count += 1
         self.get_buildings()
 
-    def get_history(self, building, type='sold'):
+    def get_history(self, building_key, type='sold'):
 
-        self.__get_content(self.secrets['url'] + building['link'])
+        self.__get_content(self.secrets['url'] + self.buildings[building_key])
         all_sales_link = self.content.find('a', {'class':"all_sale_link"}).get('href')
         #get all sales info
         self.__get_content(self.secrets['url'] + all_sales_link)
@@ -63,15 +64,34 @@ class Scrapper(LoginSession, StringModifier):
 
         records = []
         for content in history_content:
-            records.append(self.__get_unit_detail(content))
+            unit_detail = self.__get_unit_detail(content)
+            unit_detail['building'] = building_key
+            records.append(unit_detail)
         return records
 
     def __get_unit_detail(self, content):
+        period = self.remove_escapes(content.find('time').text)
+
+        #in order to retain period information
+        if period.strip() == '':
+            period = self.last_period
+        else:
+            self.last_period = period
+
+        size = self.remove_escapes(content.find('span', {'class':'listing-sqft'}).text)
+        if '-' in size:
+            size_min, size_max = size.split('-')
+        else:
+            size_min = size_max = int(size)
+
+        date_format = '%b %Y'
+
         info = {
-            'period': self.remove_escapes(content.find('time').text),
-            'unit': self.remove_escapes(content.find('span', {'class':'listing-name'}).text),
-            'size': self.remove_escapes(content.find('span', {'class':'listing-sqft'}).text),
-            'price': self.remove_escapes(content.find('span', {'class':'tag-price'}).text)
+            'period': datetime.datetime.strptime(period.strip(), date_format).date(),
+            'unit': int(self.remove_escapes(content.find('span', {'class':'listing-name'}).text).replace('Unit ','')),
+            'size_min': int(size_min),
+            'size_max': int(size_max),
+            'price': int(self.remove_escapes(content.find('span', {'class':'tag-price'}).text).replace('$','').replace(',',''))
         }
 
         more_info = content.find('div', {'class':'listing-bed-bath-div'})
