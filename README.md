@@ -28,20 +28,23 @@ leased: 'Lsd'
 ### Objects:
 There is really only one object you need to really use: `objects.scrapper.Scrapper`
 
-`Scrapper.load_cred(filename)`:
+#### `Scrapper.load_cred(filename)`:
 
 `filename` is the yaml config file that contains the configuration mentioned above
 
 
-`Scrapper.login()`:
+
+#### `Scrapper.login()`:
 
 login to the host source
 
 
-`Scrapper.get_buildings`:
+
+#### `Scrapper.get_buildings`:
 
 Get buildings that are available with historical data.  You can access buildings through `.buildings`
 
-`Scrapper.get_history(building, type = 'sold')`
+
+#### `Scrapper.get_history(building, type = 'sold')`
 
 `building` is the dictionary variable that you will scan through.  `type` is to highlight what transaction records you want to filter on.
