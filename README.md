@@ -7,7 +7,9 @@ Due to the fact that I am not sure how legal this scrapping is and I don't want 
 ## Usage:
 
 ### Install:
-Coming soon
+1. clone the repository `git clone https://github.com/justinjeong7/toronto_housing_scrapper.git`
+2. go into cloned repository and run `conda env create -f environment.yml` to create a conda environment
+3. activate the environment by running `source activate toronto_housing_scrapper`
 
 ### Configuration:
 In order to use this project, you will need to provide a configuration file.   This configuration file will require:
