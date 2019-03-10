@@ -20,3 +20,12 @@ class StringModifier:
                     output = output + char
 
         return output
+
+class InputValidator:
+
+    def __init__(self):
+        pass
+
+    def validate_input_type(self, input, type):
+        assert(type(input), type), "'{input}' provided does not match the expected type of {type}".format(input=input, type=type)
+        return input

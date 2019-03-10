@@ -1,28 +1,18 @@
 import os
 import csv
 import json
+import copy
 
 class Persist:
 
-    def __init__(self, filename = None, dir = None):
-        pass
-        self.filename = self.set_filename(filename)
+    def __init__(self, dir = None):
+        self.__set_filename()
         self.dir = self.set_dir(dir)
         self.fullpath = None
         self.format = 'csv'
 
-    def set_filename(self, filename):
-        if isinstance(filename, str):
-            if '/' in filename:
-
-                if filename.startswith('/'):
-                    filename = filename[1:]
-                else:
-                    self.set_dir('/'.join(filename.split('/')[:-1]))
-
-        self.filename = filename
-        self.__filename()
-        self.__define_format()
+    def __set_filename(self):
+        self.filename = self.tablename +'.csv'
 
     def __define_format(self):
         if not self.filename:
@@ -49,7 +39,7 @@ class Persist:
         if self.filename and self.dir:
             self.fullpath = self.dir + self.filename
 
-    def write(self, record):
+    def write(self):
         if not self.fullpath:
             raise ValueError("'filename' and 'dir' values must be set")
 
@@ -60,10 +50,10 @@ class Persist:
 
         with open(self.fullpath, mode) as f:
             if self.format == 'csv':
-                writer = csv.DictWriter(f, fieldnames = record.keys())
+                writer = csv.DictWriter(f, fieldnames = self.record.keys())
                 if mode == 'w':
                     writer.writeheader()
-                writer.writerow(record)
+                writer.writerow(self.record)
             else:
                 json.dump(record, f)
 
@@ -76,5 +66,7 @@ class Persist:
                 reader = csv.DictReader(f, delimiter=',')
                 data = []
                 for row in reader:
-                    data.append(row)
+                    _obj = copy.deepcopy(self)
+                    _obj.__dict__.update(row)
+                    data.append(_obj)
         return data

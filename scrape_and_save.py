@@ -1,5 +1,5 @@
-from objects import Scrapper
-from objects import Persist
+from objects import BuildingScrapper, UnitScrapper
+from objects import Condos, CondoUnits
 import argparse
 import os
 
@@ -9,33 +9,51 @@ if __name__ == '__main__':
     parser.add_argument('--condo-key',  help = "Condo building key", default = None)
     args = parser.parse_args()
 
-    s = Scrapper()
+    s = BuildingScrapper()
     s.load_cred('.secret.yaml')
     s.login()
 
-    p = Persist()
-    p.set_dir('data/')
-    p.set_filename('building_records.json')
+    condos = Condos()
+    condos.set_dir('data/')
 
-
-    if os.path.exists(p.fullpath):
-        s.buildings = p.load()
+    if os.path.exists(condos.fullpath):
+        for c in condos.load():
+            s.buildings[c.name] = c
 
     else:
         s.get_buildings()
         while s.more_buildings_available:
             s.get_more_buildings()
 
-    p.set_filename('all_sales_data.csv')
+        for key, building in s.buildings.items():
+            s.get_building_detail(key)
+            building.set_dir('data/')
+            building.generate_record()
+            building.write()
 
+    u = UnitScrapper()
+    u.session = s.session
+    u.secrets = s.secrets
+
+    counts = 0
     if args.condo_key:
-        units = s.get_history(args.condo_key)
+        u.set_building(s.buildings[args.condo_key])
+        units = u.get_history()
 
         for unit in units:
-            p.write(unit)
+            unit.set_dir('data/')
+            unit.generate_record()
+            unit.write()
 
     else:
-        for building in s.buildings:
-            units = s.get_history(building)
+        for k, v  in s.buildings.items():
+            u.set_building(v)
+            units = u.get_history()
+
             for unit in units:
-                p.write(unit)
+                unit.set_dir('data/')
+                unit.generate_record()
+                unit.write()
+
+            counts += 1
+            print("{n}/{total} buildings scrapped".format(n=counts, total = len(s.buildings)))
