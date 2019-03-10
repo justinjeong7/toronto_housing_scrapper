@@ -1,0 +1,7 @@
+name: toronto_condo_scrapper
+dependencies:
+  - python=3.6
+  - requests=2.18
+  - beautifulsoup4=4.6
+  - lxml
+  - pyyaml=3.12

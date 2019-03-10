@@ -141,51 +141,6 @@ class UnitScrapperTests(unittest.TestCase):
         self.assertIsInstance(units, list)
         self.assertEqual(units[0].__class__, CondoUnits)
 
-class PersistTests(unittest.TestCase):
-
-    def setUp(self):
-        self.p = Persist()
-
-    def test_set_filename(self):
-
-        self.p.set_filename('test.json')
-        self.assertEqual(self.p.filename, 'test.json')
-        self.assertEqual(self.p.format, 'json')
-        self.assertEqual(self.p.fullpath, None)
-
-        self.p.set_filename('/test.csv')
-        self.assertEqual(self.p.filename, 'test.csv')
-        self.assertEqual(self.p.format, 'csv')
-        self.assertEqual(self.p.fullpath, None)
-
-    def test_set_dir(self):
-        self.p.set_dir('../test/')
-        self.assertEqual(self.p.dir, '../test/')
-        self.assertEqual(os.path.exists('../test/'), True)
-
-        shutil.rmtree('../test/')
-        self.p.set_dir('../test')
-        self.assertEqual(self.p.dir, '../test/')
-        self.assertEqual(os.path.exists('../test/'), True)
-
-    def test_write(self):
-        self.p.set_dir('../test/')
-        self.p.set_filename('test.csv')
-
-        record = {'header1':5, 'header2':10}
-        self.p.write(record)
-
-        with open(self.p.fullpath, 'r') as f :
-            output = f.read()
-
-        self.assertEqual(len(output.split('\n')),3)
-
-    def tearDown(self):
-        self.p.dir = None
-        self.p.filename = None
-        if os.path.exists('../test/'):
-            shutil.rmtree('../test/')
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
